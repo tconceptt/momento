@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Momento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #111111;
+      --ink-2: #5c5c5c;
+      --ink-3: #8a8a8a;
+      --line: #e8e8e8;
+      --fill: #f4f4f4;
+      --live: #1a9e5a;
+      --danger: #c4321f;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.5 "Schibsted Grotesk", system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+
+    }
+    ::selection { background: var(--ink); color: #fff; }
+    :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 6px; }
+    button, input { font: inherit; color: inherit; }
+
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+    @media (min-width: 720px) { .wrap { padding: 0 32px; } }
+
+    /* Header */
+    header { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .wordmark { font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
+    .live { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-2); }
+    .live i { width: 7px; height: 7px; border-radius: 50%; background: var(--live); }
+
+    /* Title + actions */
+    .intro { padding: 40px 0 28px; display: grid; gap: 24px; }
+    @media (min-width: 720px) { .intro { grid-template-columns: 1fr auto; align-items: end; padding: 64px 0 36px; } }
+    h1 { margin: 0; font-weight: 600; font-size: clamp(34px, 7vw, 56px); line-height: 1.02; letter-spacing: -0.035em; text-wrap: balance; }
+    .intro p { margin: 10px 0 0; color: var(--ink-2); font-size: 16px; max-width: 42ch; }
+
+    .actions { display: flex; gap: 8px; }
+    .name {
+      flex: 1; min-width: 0; width: 200px; height: 44px; padding: 0 14px;
+      border: 1px solid var(--line); border-radius: 10px; background: var(--bg); outline: none;
+      transition: border-color .15s;
+    }
+    .name::placeholder { color: var(--ink-3); }
+    .name:focus { border-color: var(--ink); }
+    .btn {
+      height: 44px; padding: 0 18px; border: 0; border-radius: 10px;
+      background: var(--ink); color: #fff; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 8px; cursor: pointer; white-space: nowrap;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn:disabled { opacity: .5; cursor: progress; }
+
+
+    .progress { height: 2px; background: var(--fill); margin-top: 16px; visibility: hidden; }
+    .progress.on { visibility: visible; }
+    .progress div { height: 100%; background: var(--ink); transform: scaleX(0); transform-origin: left; transition: transform .15s; }
+
+    /* Wall */
+    .wall-head { display: flex; justify-content: space-between; align-items: baseline; margin: 32px 0 12px; font-size: 13px; color: var(--ink-3); }
+    .wall { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+    @media (min-width: 720px) { .wall { grid-template-columns: repeat(4, 1fr); gap: 6px; } }
+    .tile {
+      aspect-ratio: 1; padding: 0; border: 0; background: var(--fill); cursor: zoom-in;
+      overflow: hidden; border-radius: 2px;
+    }
+    @media (min-width: 720px) { .tile { border-radius: 6px; } }
+    .tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+    .tile:hover img { transform: scale(1.03); }
+    .tile.enter { animation: enter .7s cubic-bezier(.16,1,.3,1); }
+    @keyframes enter { from { opacity: 0; transform: scale(.92); filter: blur(6px); } }
+
+    .empty { padding: 72px 16px; text-align: center; color: var(--ink-2); border: 1px dashed var(--line); border-radius: 12px; }
+    .empty b { display: block; color: var(--ink); font-weight: 500; margin-bottom: 2px; }
+
+
+    /* Viewer */
+    dialog { border: 0; padding: 0; background: transparent; max-width: none; max-height: none; width: 100%; height: 100%; }
+    dialog::backdrop { background: rgba(255,255,255,.96); }
+    .viewer { height: 100%; display: flex; flex-direction: column; padding: 16px; }
+    .viewer-top { display: flex; justify-content: flex-end; }
+    .viewer figure { flex: 1; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 0; }
+    .viewer img { max-width: 100%; max-height: calc(100% - 60px); border-radius: 8px; object-fit: contain; }
+    .viewer figcaption { display: flex; align-items: center; gap: 16px; font-size: 14px; color: var(--ink-2); }
+    .viewer figcaption b { color: var(--ink); font-weight: 500; }
+    .icon-btn { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); display: grid; place-items: center; cursor: pointer; }
+    .icon-btn:hover { border-color: var(--ink); }
+    .icon-btn.danger { color: var(--danger); }
+
+    /* Notice */
+    .notice {
+      position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); transform: translate(-50%, 16px);
+      background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px;
+      opacity: 0; pointer-events: none; transition: opacity .2s, transform .3s cubic-bezier(.16,1,.3,1);
+      max-width: calc(100% - 32px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .notice.on { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <span class="wordmark">Momento</span>
+      <span class="live"><i></i>Live</span>
+    </header>
+
+    <section class="intro">
+      <div>
+        <h1 id="event">Abal 2.0 Launch Event</h1>
+        <p>Add a photo from your phone. It appears here for everyone within seconds.</p>
+      </div>
+      <form class="actions" id="upload-form">
+        <input class="name" id="name" placeholder="Your name" maxlength="40" autocomplete="name" aria-label="Your name">
+        <button class="btn" type="button" id="add">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          Add photos
+        </button>
+        <input type="file" id="file" accept="image/*" multiple hidden>
+      </form>
+    </section>
+
+    <div class="progress" id="progress"><div></div></div>
+
+    <div class="wall-head">
+      <span id="count">Photos</span>
+    </div>
+    <div class="wall" id="wall"></div>
+    <div class="empty" id="empty" hidden>
+      <b>No photos yet</b>
+      Add the first one.
+    </div>
+  </div>
+
+  <dialog id="viewer">
+    <div class="viewer">
+      <div class="viewer-top">
+        <button class="icon-btn" id="close" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <figure>
+        <img id="viewer-img" alt="">
+        <figcaption>
+          <span id="viewer-meta"></span>
+          <button class="icon-btn danger" id="delete" aria-label="Delete photo">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
+          </button>
+        </figcaption>
+      </figure>
+    </div>
+  </dialog>
+
+  <div class="notice" id="notice" role="status" aria-live="polite"></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const wall = $("wall");
+    const rendered = new Map(); // photo id -> tile
+    let animateNew = false;     // false on first paint so the wall doesn't animate in all at once
+    let current = null;
+
+    function fmtSize(n) {
+      if (n < 1024) return n + " B";
+      if (n < 1048576) return (n / 1024).toFixed(1) + " KB";
+      if (n < 1073741824) return (n / 1048576).toFixed(1) + " MB";
+      return (n / 1073741824).toFixed(2) + " GB";
+    }
+    function ago(date) {
+      const s = Math.max(0, Math.round((Date.now() - new Date(date)) / 1000));
+      if (s < 10) return "just now";
+      if (s < 60) return s + " sec ago";
+      if (s < 3600) return Math.floor(s / 60) + " min ago";
+      if (s < 86400) return Math.floor(s / 3600) + " h ago";
+      return Math.floor(s / 86400) + " d ago";
+    }
+    function notify(msg) {
+      const n = $("notice");
+      n.textContent = msg;
+      n.classList.add("on");
+      clearTimeout(n._t);
+      n._t = setTimeout(() => n.classList.remove("on"), 2600);
+    }
+
+    function makeTile(f) {
+      const tile = document.createElement("button");
+      tile.className = "tile";
+      tile.type = "button";
+      tile.setAttribute("aria-label", "Photo by " + (f.uploader || "a guest"));
+      const img = document.createElement("img");
+      img.src = "api/files/" + f.id;
+      img.alt = "";
+      img.loading = "lazy";
+      tile.append(img);
+      tile.onclick = () => openViewer(f);
+      return tile;
+    }
+
+    async function loadWall() {
+      const files = await fetch("api/files").then((r) => r.json());
+      const ids = new Set(files.map((f) => f.id));
+      for (const [id, el] of rendered) {
+        if (!ids.has(id)) { el.remove(); rendered.delete(id); }
+      }
+      const fresh = files.filter((f) => !rendered.has(f.id)).reverse(); // oldest first, so newest ends on top
+      for (const f of fresh) {
+        const tile = makeTile(f);
+        if (animateNew) tile.classList.add("enter");
+        wall.prepend(tile);
+        rendered.set(f.id, tile);
+      }
+      animateNew = true;
+      $("empty").hidden = files.length > 0;
+      $("count").textContent = files.length === 1 ? "1 photo" : files.length + " photos";
+      return fresh.length;
+    }
+
+    async function loadStats() {
+      const s = await fetch("api/stats").then((r) => r.json());
+      $("event").textContent = s.event;
+      document.title = s.event + " · Momento";
+    }
+
+    let busy = false;
+    async function refresh({ quiet = false } = {}) {
+      try {
+        const [added] = await Promise.all([loadWall(), loadStats()]);
+        if (added && !quiet && !busy) notify(added === 1 ? "New photo added" : added + " new photos added");
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function uploadOne(file, by, onProgress) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const q = "name=" + encodeURIComponent(file.name) + (by ? "&by=" + encodeURIComponent(by) : "");
+        xhr.open("POST", "api/files?" + q);
+        xhr.setRequestHeader("Content-Type", file.type || "image/jpeg");
+        xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total);
+        xhr.onload = () => (xhr.status < 300 ? resolve() : reject(new Error(xhr.responseText)));
+        xhr.onerror = () => reject(new Error("Network error"));
+        xhr.send(file);
+      });
+    }
+
+    async function upload(list) {
+      const files = [...list].filter((f) => f.type.startsWith("image/"));
+      if (!files.length) return notify("Only photos can be added");
+      const by = $("name").value.trim();
+      try { localStorage.setItem("momento-name", by); } catch {}
+
+      busy = true;
+      $("add").disabled = true;
+      const bar = $("progress");
+      bar.classList.add("on");
+      let failed = 0;
+      for (let i = 0; i < files.length; i++) {
+        try {
+          await uploadOne(files[i], by, (p) => (bar.firstElementChild.style.transform = "scaleX(" + (i + p) / files.length + ")"));
+        } catch (e) {
+          failed++;
+          console.error(e);
+        }
+      }
+      await refresh({ quiet: true });
+      busy = false;
+      $("add").disabled = false;
+      bar.classList.remove("on");
+      bar.firstElementChild.style.transform = "scaleX(0)";
+      const ok = files.length - failed;
+      if (failed) notify(failed + " of " + files.length + " couldn't be uploaded. Try again.");
+      else notify(ok === 1 ? "Your photo is on the wall" : ok + " photos are on the wall");
+    }
+
+    $("add").onclick = () => $("file").click();
+    $("file").onchange = (e) => { upload(e.target.files); e.target.value = ""; };
+    $("upload-form").onsubmit = (e) => e.preventDefault();
+    document.addEventListener("dragover", (e) => e.preventDefault());
+    document.addEventListener("drop", (e) => { e.preventDefault(); upload(e.dataTransfer.files); });
+
+    function openViewer(f) {
+      current = f;
+      $("viewer-img").src = "api/files/" + f.id;
+      $("viewer-meta").innerHTML = "";
+      const b = document.createElement("b");
+      b.textContent = f.uploader || "Guest";
+      $("viewer-meta").append(b, " · " + ago(f.created_at));
+      $("viewer").showModal();
+    }
+    $("close").onclick = () => $("viewer").close();
+    $("viewer").onclick = (e) => { if (e.target.closest("img, button") === null) $("viewer").close(); };
+    $("delete").onclick = async () => {
+      if (!current || !confirm("Remove this photo from the wall?")) return;
+      await fetch("api/files/" + current.id, { method: "DELETE" });
+      $("viewer").close();
+      busy = true;
+      await refresh({ quiet: true });
+      busy = false;
+    };
+
+    try { $("name").value = localStorage.getItem("momento-name") || ""; } catch {}
+    refresh({ quiet: true });
+    setInterval(refresh, 4000);
+  </script>
+</body>
+</html>
